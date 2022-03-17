@@ -1,10 +1,9 @@
 import torch
 from typing import Optional
-from gpytorch.lazy import InterpolatedLazyTensor,  RootLazyTensor, CatLazyTensor
+from gpytorch.lazy import InterpolatedLazyTensor, RootLazyTensor, CatLazyTensor
 from gpytorch.priors import Prior
 from gpytorch.utils.broadcasting import _mul_broadcast_shape
 from gpytorch.kernels import Kernel
-from gpytorch.lazy import InterpolatedLazyTensor, RootLazyTensor
 
 
 class LowFidelityIndexKernel(Kernel):
