@@ -5,17 +5,12 @@ from gpytorch.priors import Prior
 from gpytorch.utils.broadcasting import _mul_broadcast_shape
 from gpytorch.kernels import Kernel
 
-
 class LowFidelityIndexKernel(Kernel):
     def __init__(
         self,
-        num_tasks: int,
-        rank: Optional[int] = 1,
         prior: Optional[Prior] = None,
         **kwargs,
     ):
-        if rank > num_tasks:
-            raise RuntimeError("Cannot create a task covariance matrix larger than the number of tasks")
         super().__init__(**kwargs)
 
         self.register_parameter(
@@ -50,12 +45,8 @@ class LowFidelityIndexKernel(Kernel):
 class HighFidelityIndexKernel(Kernel):
     def __init__(
         self,
-        num_tasks: int,
-        rank: Optional[int] = 1,
         **kwargs,
     ):
-        if rank > num_tasks:
-            raise RuntimeError("Cannot create a task covariance matrix larger than the number of tasks")
         super().__init__(**kwargs)
         self.covar_factor = torch.tensor([[0],[1]])
 
