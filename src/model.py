@@ -11,8 +11,8 @@ class LinearARGPModel(gpytorch.models.ExactGP):
         self.HF_kernel = HF_kernel
         self.LF_kernel = LF_kernel
 
-        self.HF_task_kernel = HighFidelityIndexKernel(rank=rank, num_tasks=num_tasks)
-        self.LF_task_kernel = LowFidelityIndexKernel(rank=rank, num_tasks=num_tasks)
+        self.HF_task_kernel = HighFidelityIndexKernel()
+        self.LF_task_kernel = LowFidelityIndexKernel()
 
         self.feature_extractor = feature_extractor
         self.scale_to_bounds = gpytorch.utils.grid.ScaleToBounds(-1., 1.)
