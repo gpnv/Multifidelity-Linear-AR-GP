@@ -3,6 +3,7 @@ import torch
 import gpytorch
 from gpytorch.kernels import RBFKernel, ScaleKernel
 import tqdm
+from optimizer import FullBatchLBFGS
 
 class LinearARGPModel(gpytorch.models.ExactGP):
     def __init__(self, train_x, train_y, likelihood, HF_kernel, LF_kernel, rank=1, num_tasks=2, feature_extractor = None):
