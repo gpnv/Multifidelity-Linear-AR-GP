@@ -40,7 +40,7 @@ class LinearARGPModel(gpytorch.models.ExactGP):
         return gpytorch.distributions.MultivariateNormal(mean_x, covar)
 
 class LinearARModel():
-    def __init__(self, full_train_x, full_train_y, full_train_i, name=None, lr=0.1, epoch=500, use_ARD = False) -> None:
+    def __init__(self, full_train_x, full_train_y, full_train_i, name=None, lr=1e-2, epoch=50, use_ARD = False, max_ls=2e3) -> None:
         self.full_train_x = full_train_x
         self.full_train_i = full_train_i
         self.full_train_y = full_train_y
@@ -50,33 +50,34 @@ class LinearARModel():
         self.in_size = full_train_x.shape[-1]
         self.out_size = full_train_y.shape[-1]
         self.name = name if name else self.__class__.__name__
+        self.max_ls = max_ls
 
     def train(self):
-
         if torch.cuda.is_available():
             self.model = self.model.cuda()
             self.likelihood = self.likelihood.cuda()
 
-        optimizer = torch.optim.Adam([
-                {'params': self.model.parameters()}
-            ],
-            lr=self.lr
-        )
+        optimizer = FullBatchLBFGS(self.model.parameters(), lr=self.lr)
+        lml = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model)
 
-        MF_lml = gpytorch.mlls.ExactMarginalLogLikelihood(self.likelihood, self.model)
-        
-        self.likelihood.train()
-        self.model.train()
-
-        iterator = tqdm.tqdm(range(1, self.epoch + 1))
-        for _ in iterator:
-            # Zero backprop gradients
+        def closure():
             optimizer.zero_grad()
-            # Get output from model
             output = self.model(self.full_train_x, self.full_train_i)
-            loss = -MF_lml(output, self.full_train_y)
-            loss.backward(retain_graph=True)
-            optimizer.step()
+            loss = -lml(output, self.full_train_y)
+            return loss
+        
+        loss = closure()
+        loss.backward()
+
+        iterator = tqdm.tqdm(range(1, self.epoch))
+        for _ in iterator:
+            # perform step and update curvature
+            options = {'closure': closure, 'current_loss': loss, 'max_ls': self.max_ls}
+            loss, _, lr, _, F_eval, G_eval, _, fail = optimizer.step(options)
+
+            if fail:
+                break
+
             iterator.set_postfix({'loss': loss.item()})
 
     def build(self):
